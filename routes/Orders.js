@@ -1,6 +1,6 @@
 import express from 'express'
 import Order from '../models/Order.js'
-import sendEmail from '../utils/sendEmail.js'
+import sendEmail from '../utils/SendEmail.js'
 
 const router = express.Router()
 

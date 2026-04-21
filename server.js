@@ -3,12 +3,12 @@ import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import cors from 'cors'
 
-import authRoutes from './routes/auth.js'
-import productRoutes from './routes/products.js'
-import orderRoutes from './routes/orders.js'
-import reviewRoutes from './routes/reviews.js'
-import chatRoutes from './routes/chat.js'
-import promoRoutes from './routes/promo.js'
+import authRoutes from './routes/Auth.js'
+import productRoutes from './routes/Products.js'
+import orderRoutes from './routes/Orders.js'
+import reviewRoutes from './routes/Reviews.js'
+import chatRoutes from './routes/Chat.js'
+import promoRoutes from './routes/Promo.js'
 
 dotenv.config()
 
