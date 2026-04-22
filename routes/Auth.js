@@ -265,4 +265,72 @@ try {
   console.log('⚠️ Admin signup notification failed:', adminEmailErr.message)
 }
 
+
+// @route POST /api/auth/google — Google Sign In
+router.post('/google', async (req, res) => {
+  const { token } = req.body
+
+  try {
+    // Verify Google token
+    const response = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token}`)
+    const googleUser = await response.json()
+
+    if (!googleUser.email) {
+      return res.status(400).json({ message: 'Invalid Google token' })
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email: googleUser.email })
+
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        fullName: googleUser.name,
+        email: googleUser.email,
+        phone: '',
+        password: `google_${googleUser.sub}`,
+        isGoogleUser: true,
+      })
+
+      // Send welcome email
+      try {
+        await sendEmail({
+          to: googleUser.email,
+          subject: '🎉 Welcome to OBISCO Gadgets!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO <span style="font-weight: 300;">gadgets</span></h1>
+              </div>
+              <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                <h2 style="color: #1f2937;">Welcome, ${googleUser.name}! 🎉</h2>
+                <p style="color: #6b7280;">You have successfully signed in with Google. Start shopping the best gadgets in Nigeria!</p>
+              </div>
+            </div>
+          `,
+        })
+      } catch (emailErr) {
+        console.log('Welcome email failed:', emailErr.message)
+      }
+    }
+
+    // Generate JWT
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
+
+    res.json({
+      message: 'Google Sign In successful!',
+      token: jwtToken,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+      }
+    })
+  } catch (err) {
+    console.log('Google auth error:', err.message)
+    res.status(500).json({ message: 'Server error', error: err.message })
+  }
+})
+
 export default router

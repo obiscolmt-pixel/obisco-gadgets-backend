@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
   },
+
+  isGoogleUser: {
+  type: Boolean,
+  default: false,
+}
 }, { timestamps: true })
 
 export default mongoose.model('User', userSchema)
