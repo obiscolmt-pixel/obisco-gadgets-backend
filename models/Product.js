@@ -6,10 +6,14 @@ const productSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  department: {
+    type: String,
+    enum: ['gadgets', 'fashion', 'lifestyle'],
+    default: 'gadgets',
+  },
   category: {
     type: String,
     required: true,
-    enum: ['phones', 'laptops', 'headphones', 'chargers', 'speakers', 'tablets'],
   },
   image: {
     type: String,
@@ -24,6 +28,10 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  description: {
+    type: String,
+    default: '',
+  },
   inStock: {
     type: Boolean,
     default: true,
@@ -34,7 +42,6 @@ const productSchema = new mongoose.Schema({
       image: { type: String },
     }
   ],
-
 }, { timestamps: true })
 
 export default mongoose.model('Product', productSchema)

@@ -6,14 +6,16 @@ const router = express.Router()
 // @route GET /api/products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find()
+    const { department } = req.query
+    const filter = department ? { department } : {}
+    const products = await Product.find(filter)
     res.json(products)
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
 
-// @route POST /api/products/seed — seed products from data.js
+// @route POST /api/products/seed
 router.post('/seed', async (req, res) => {
   try {
     await Product.deleteMany()
@@ -24,7 +26,7 @@ router.post('/seed', async (req, res) => {
   }
 })
 
-// @route POST /api/products/add — add new products without deleting
+// @route POST /api/products/add
 router.post('/add', async (req, res) => {
   try {
     const products = await Product.insertMany(req.body)
@@ -34,7 +36,7 @@ router.post('/add', async (req, res) => {
   }
 })
 
-
+// @route PUT /api/products/:id
 router.put('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
