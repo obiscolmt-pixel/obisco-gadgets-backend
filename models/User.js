@@ -15,7 +15,8 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
   },
   password: {
     type: String,
@@ -29,9 +30,9 @@ const userSchema = new mongoose.Schema({
   },
 
   isGoogleUser: {
-  type: Boolean,
-  default: false,
-}
+    type: Boolean,
+    default: false,
+  }
 }, { timestamps: true })
 
 export default mongoose.model('User', userSchema)

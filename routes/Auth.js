@@ -322,13 +322,14 @@ router.post('/google-userinfo', async (req, res) => {
     let user = await User.findOne({ email: userInfo.email })
 
     if (!user) {
+      const hashedPassword = await bcrypt.hash(`google_${userInfo.sub}`, 10)
       user = await User.create({
         fullName: userInfo.name,
         email: userInfo.email,
         phone: '',
-        password: `google_${userInfo.sub}`,
+        password: hashedPassword,
+        isGoogleUser: true,
       })
-
       try {
         await sendEmail({
           to: userInfo.email,
