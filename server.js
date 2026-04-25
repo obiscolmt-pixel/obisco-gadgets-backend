@@ -9,6 +9,7 @@ import orderRoutes from './routes/Orders.js'
 import reviewRoutes from './routes/Reviews.js'
 import chatRoutes from './routes/Chat.js'
 import promoRoutes from './routes/Promo.js'
+import businessRegRoutes from './routes/BusinessReg.js'
 
 dotenv.config()
 
@@ -26,6 +27,8 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/promo', promoRoutes)
+app.use('/api/business', businessRegRoutes)
+
 
 // Test route
 app.get('/', (req, res) => {
