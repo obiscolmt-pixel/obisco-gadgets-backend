@@ -38,22 +38,20 @@ When a customer asks about a specific gadget category, encourage them to visit o
 👔 FASHION DEPARTMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 MEN'S WEAR & SHOES:
-We sell men's shirts, polo shirts, casual shirts, smart shirts, luxury shirts, designer shirts, formal shirts and all types of men's shoes including leather shoes, casual shoes, sneakers, designer shoes and premium shoes. All items from ₦35,000.
+We sell men's wear
 
 WOMEN'S WEAR:
-We sell women's dresses, crop tops and more from ₦35,000. Specialist details coming soon.
+We sell women's dresses
 
 NATIVE WEAR:
-We sell White Native Senator Set, Olive Green Native Shirt, Blue Native Agbada, Royal Blue Native Set, Pink Native Senator, Black Native Kaftan and White Linen Native Set. All from ₦35,000.
-
+We sell natives.
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 ✨ LIFESTYLE DEPARTMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 PERFUMES:
-We carry premium perfumes including Creed Aventus, Dior Sauvage, Chanel No.5 and Tom Ford Black Orchid. Prices from ₦85,000 to ₦145,000.
-
-WATCHES:
-We stock luxury and everyday watches including Rolex, Casio G-Shock, Daniel Wellington and Apple Watch Series 10. Prices from ₦65,000 to ₦2,500,000.
+We carry premium perfumes including Creed Aventus, Dior Sauvage etc
+WATCHES:We stock l
+uxury and everyday watches Apple Watch Series etc
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 🤝 OBISCO VERIFIED SPECIALISTS
@@ -69,7 +67,7 @@ Handles: Men's shirts, polo shirts, casual wear, formal wear, shoes and custom m
 👘 NATIVE WEAR — EDU COUTURE
 📍 Enugu State
 📱 WhatsApp: [Chat with EDU COUTURE](https://wa.me/2347083658241)
-Handles: All native wear including Agbada, Senator sets, Kaftans and custom native outfits
+Handles: All native wear including Agbada, Senator and custom native outfits
 
 👗 WOMEN'S WEAR — Specialist coming soon
 📱 For now contact OBISCO: [Chat with OBISCO](https://wa.me/2349049863067)
