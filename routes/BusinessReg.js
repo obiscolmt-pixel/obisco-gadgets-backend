@@ -8,7 +8,7 @@ router.post('/register-business', async (req, res) => {
 
   try {
     await sendEmail({
-      to: 'obiscostore1@gmail.com',
+      to: 'obiscolmt@gmail.com',
       subject: `🏪 New Business Registration — ${businessName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
