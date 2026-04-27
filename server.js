@@ -48,3 +48,14 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => {
     console.log('❌ MongoDB connection error:', err.message)
   })
+
+
+  // Admin verify route
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body
+  if (password === process.env.ADMIN_PASSWORD) {
+    res.json({ success: true })
+  } else {
+    res.status(401).json({ success: false, message: 'Wrong password' })
+  }
+})

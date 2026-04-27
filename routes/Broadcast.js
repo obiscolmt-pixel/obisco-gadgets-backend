@@ -8,7 +8,7 @@ router.post('/send', async (req, res) => {
   const { subject, message, adminPassword } = req.body
 
   // Verify admin password
-  if (adminPassword !== 'obisco2025') {
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ message: 'Unauthorized' })
   }
 
