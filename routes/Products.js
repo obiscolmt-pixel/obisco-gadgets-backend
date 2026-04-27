@@ -8,7 +8,36 @@ router.get('/', async (req, res) => {
   try {
     const { department } = req.query
     const filter = department ? { department } : {}
-    const products = await Product.find(filter)
+    
+    const products = await Product.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'reviews'
+        }
+      },
+      {
+        $addFields: {
+          avgRating: {
+            $cond: {
+              if: { $gt: [{ $size: '$reviews' }, 0] },
+              then: { $round: [{ $avg: '$reviews.rating' }, 1] },
+              else: 0
+            }
+          },
+          totalReviews: { $size: '$reviews' }
+        }
+      },
+      {
+        $project: {
+          reviews: 0
+        }
+      }
+    ])
+
     res.json(products)
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
