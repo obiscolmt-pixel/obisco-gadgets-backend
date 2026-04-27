@@ -10,6 +10,39 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
+// Helper to notify admin of new signup
+const notifyAdmin = async (fullName, email, phone, method) => {
+  try {
+    await sendEmail({
+      to: 'obiscolmt@gmail.com',
+      subject: `👤 New Customer Signup — OBISCO Store`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #111827; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: #f97316; margin: 0; font-size: 24px;">👤 New Customer!</h1>
+          </div>
+          <div style="background-color: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+            <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: center;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase;">New Registration</p>
+              <p style="color: #f97316; font-size: 22px; font-weight: 900; margin: 0;">${fullName}</p>
+            </div>
+            <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px;">
+              <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📛 Name:</strong> ${fullName}</p>
+              <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📧 Email:</strong> ${email}</p>
+              <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📱 Phone:</strong> ${phone || 'Not provided'}</p>
+              <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>🔑 Method:</strong> ${method}</p>
+              <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📅 Joined:</strong> ${new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+        </div>
+      `,
+    })
+    console.log('✅ Admin notified of new signup')
+  } catch (err) {
+    console.log('⚠️ Admin signup notification failed:', err.message)
+  }
+}
+
 // @route POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { fullName, email, phone, password } = req.body
@@ -21,7 +54,6 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-
     const user = await User.create({
       fullName,
       email,
@@ -33,28 +65,28 @@ router.post('/register', async (req, res) => {
     try {
       await sendEmail({
         to: email,
-        subject: '🎉 Welcome to OBISCO Gadgets!',
+        subject: '🎉 Welcome to OBISCO Store!',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO <span style="font-weight: 300;">gadgets</span></h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO Store</h1>
             </div>
             <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
               <h2 style="color: #1f2937;">Welcome, ${fullName}! 🎉</h2>
               <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
-                Thank you for creating an account with <strong>OBISCO Gadgets</strong>. We're excited to have you on board!
+                Thank you for creating an account with <strong>OBISCO Store</strong>. We're excited to have you on board!
               </p>
               <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
-                You can now browse our latest gadgets, add items to your cart, and enjoy fast delivery across Nigeria.
+                You can now browse our latest gadgets, fashion and lifestyle products, add items to your cart, and enjoy fast delivery across Nigeria.
               </p>
               <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 20px 0;">
                 <p style="color: #c2410c; font-size: 13px; font-weight: bold; margin: 0 0 8px 0;">YOUR ACCOUNT DETAILS</p>
                 <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>Name:</strong> ${fullName}</p>
                 <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>Email:</strong> ${email}</p>
-                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>Phone:</strong> ${phone}</p>
+                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>Phone:</strong> ${phone || 'Not provided'}</p>
               </div>
               <div style="text-align: center; margin: 24px 0;">
-                <a href="https://obisco-gadgets-backend.onrender.com" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
+                <a href="https://obisco.store" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
                   Start Shopping Now
                 </a>
               </div>
@@ -65,7 +97,7 @@ router.post('/register', async (req, res) => {
               </div>
             </div>
             <div style="background-color: #111827; padding: 20px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Gadgets • Lagos, Nigeria</p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Store • Lagos, Nigeria</p>
               <p style="color: #6b7280; font-size: 11px; margin: 6px 0 0 0;">Questions? Contact us on WhatsApp: +234 904 986 3067</p>
             </div>
           </div>
@@ -75,35 +107,8 @@ router.post('/register', async (req, res) => {
       console.log('Welcome email failed:', emailErr.message)
     }
 
-    // Notify admin of new signup
-    try {
-      await sendEmail({
-        to: 'obiscolmt@gmail.com',
-        subject: `👤 New Customer Signup — OBISCO Gadgets`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background-color: #111827; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: #f97316; margin: 0; font-size: 24px;">👤 New Customer!</h1>
-            </div>
-            <div style="background-color: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-              <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: center;">
-                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase;">New Registration</p>
-                <p style="color: #f97316; font-size: 22px; font-weight: 900; margin: 0;">${fullName}</p>
-              </div>
-              <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px;">
-                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📛 Name:</strong> ${fullName}</p>
-                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📧 Email:</strong> ${email}</p>
-                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📱 Phone:</strong> ${phone || 'Not provided'}</p>
-                <p style="color: #1f2937; font-size: 14px; margin: 4px 0;"><strong>📅 Joined:</strong> ${new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              </div>
-            </div>
-          </div>
-        `,
-      })
-      console.log('✅ Admin notified of new signup')
-    } catch (adminEmailErr) {
-      console.log('⚠️ Admin signup notification failed:', adminEmailErr.message)
-    }
+    // Notify admin
+    await notifyAdmin(fullName, email, phone, 'Email & Password')
 
     res.status(201).json({
       message: 'Account created successfully!',
@@ -167,11 +172,11 @@ router.post('/forgot-password', async (req, res) => {
 
     await sendEmail({
       to: email,
-      subject: '🔐 Your OBISCO Gadgets Password Reset Code',
+      subject: '🔐 Your OBISCO Store Password Reset Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO <span style="font-weight: 300;">gadgets</span></h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO Store</h1>
           </div>
           <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
             <h2 style="color: #1f2937; font-size: 22px;">Password Reset Code 🔐</h2>
@@ -190,7 +195,7 @@ router.post('/forgot-password', async (req, res) => {
             </div>
           </div>
           <div style="background-color: #111827; padding: 20px; border-radius: 0 0 12px 12px; text-align: center;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Gadgets • Lagos, Nigeria</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Store • Lagos, Nigeria</p>
           </div>
         </div>
       `,
@@ -228,7 +233,7 @@ router.post('/reset-password', async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0;">OBISCO gadgets</h1>
+            <h1 style="color: white; margin: 0;">OBISCO Store</h1>
           </div>
           <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
             <h2 style="color: #1f2937;">Password Changed ✅</h2>
@@ -237,7 +242,7 @@ router.post('/reset-password', async (req, res) => {
             </p>
           </div>
           <div style="background-color: #111827; padding: 20px; border-radius: 0 0 12px 12px; text-align: center;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Gadgets</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Store</p>
           </div>
         </div>
       `,
@@ -249,7 +254,7 @@ router.post('/reset-password', async (req, res) => {
   }
 })
 
-// @route POST /api/auth/google — Google Sign In with ID token
+// @route POST /api/auth/google
 router.post('/google', async (req, res) => {
   const { token } = req.body
 
@@ -262,27 +267,36 @@ router.post('/google', async (req, res) => {
     }
 
     let user = await User.findOne({ email: googleUser.email })
+    const isNewUser = !user
 
     if (!user) {
+      const hashedPassword = await bcrypt.hash(`google_${googleUser.sub}`, 10)
       user = await User.create({
         fullName: googleUser.name,
         email: googleUser.email,
         phone: '',
-        password: `google_${googleUser.sub}`,
+        password: hashedPassword,
+        isGoogleUser: true,
       })
 
+      // Welcome email
       try {
         await sendEmail({
           to: googleUser.email,
-          subject: '🎉 Welcome to OBISCO Gadgets!',
+          subject: '🎉 Welcome to OBISCO Store!',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO gadgets</h1>
+                <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO Store</h1>
               </div>
               <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 12px 12px;">
                 <h2>Welcome, ${googleUser.name}! 🎉</h2>
-                <p>You signed in with Google. Start shopping the best gadgets in Nigeria!</p>
+                <p>You signed in with Google. Start shopping gadgets, fashion and lifestyle products on OBISCO Store!</p>
+                <div style="text-align: center; margin: 24px 0;">
+                  <a href="https://obisco.store" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold;">
+                    Start Shopping Now
+                  </a>
+                </div>
               </div>
             </div>
           `,
@@ -290,6 +304,9 @@ router.post('/google', async (req, res) => {
       } catch (emailErr) {
         console.log('Welcome email failed:', emailErr.message)
       }
+
+      // Notify admin
+      await notifyAdmin(googleUser.name, googleUser.email, 'Not provided', 'Google Sign In')
     }
 
     const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
@@ -310,7 +327,7 @@ router.post('/google', async (req, res) => {
   }
 })
 
-// @route POST /api/auth/google-userinfo — Google Sign In with access token
+// @route POST /api/auth/google-userinfo
 router.post('/google-userinfo', async (req, res) => {
   const { userInfo } = req.body
 
@@ -330,18 +347,25 @@ router.post('/google-userinfo', async (req, res) => {
         password: hashedPassword,
         isGoogleUser: true,
       })
+
+      // Welcome email
       try {
         await sendEmail({
           to: userInfo.email,
-          subject: '🎉 Welcome to OBISCO Gadgets!',
+          subject: '🎉 Welcome to OBISCO Store!',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h1 style="color: white; margin: 0;">OBISCO gadgets</h1>
+                <h1 style="color: white; margin: 0;">OBISCO Store</h1>
               </div>
               <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 12px 12px;">
                 <h2>Welcome, ${userInfo.name}! 🎉</h2>
-                <p>You signed in with Google. Start shopping the best gadgets in Nigeria!</p>
+                <p>You signed in with Google. Start shopping gadgets, fashion and lifestyle products on OBISCO Store!</p>
+                <div style="text-align: center; margin: 24px 0;">
+                  <a href="https://obisco.store" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold;">
+                    Start Shopping Now
+                  </a>
+                </div>
               </div>
             </div>
           `,
@@ -349,6 +373,9 @@ router.post('/google-userinfo', async (req, res) => {
       } catch (emailErr) {
         console.log('Welcome email failed:', emailErr.message)
       }
+
+      // Notify admin
+      await notifyAdmin(userInfo.name, userInfo.email, 'Not provided', 'Google Sign In')
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
