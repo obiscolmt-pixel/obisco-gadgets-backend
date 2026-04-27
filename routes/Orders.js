@@ -7,37 +7,37 @@ const router = express.Router()
 const statusMessages = {
   confirmed: {
     emoji: '✅',
-    subject: '✅ Your Order Has Been Confirmed — OBISCO Gadgets',
+    subject: '✅ Your Order Has Been Confirmed — OBISCO Store',
     title: 'Order Confirmed!',
     message: 'Great news! Your payment has been verified and your order is now confirmed. We are preparing your items for shipment.',
     color: '#f97316',
   },
   shipped: {
     emoji: '📦',
-    subject: '📦 Your Order Has Been Shipped — OBISCO Gadgets',
+    subject: '📦 Your Order Has Been Shipped — OBISCO Store',
     title: 'Order Shipped!',
     message: 'Your order is on its way! Our delivery team has picked up your package and it is heading to you.',
     color: '#8b5cf6',
   },
   out_for_delivery: {
     emoji: '🚚',
-    subject: '🚚 Your Order Is Out For Delivery — OBISCO Gadgets',
+    subject: '🚚 Your Order Is Out For Delivery — OBISCO Store',
     title: 'Out For Delivery!',
     message: 'Exciting news! Your order is out for delivery today. Please make sure someone is available to receive it.',
     color: '#3b82f6',
   },
   delivered: {
     emoji: '🎉',
-    subject: '🎉 Your Order Has Been Delivered — OBISCO Gadgets',
+    subject: '🎉 Your Order Has Been Delivered — OBISCO Store',
     title: 'Order Delivered!',
-    message: 'Your order has been successfully delivered! We hope you love your new gadget. Thank you for shopping with OBISCO Gadgets.',
+    message: 'Your order has been successfully delivered! We hope you love your purchase. Thank you for shopping with OBISCO Store.',
     color: '#10b981',
   },
 }
 
 // @route POST /api/orders — place an order
 router.post('/', async (req, res) => {
-  const { items, totalAmount, delivery, userId } = req.body
+  const { items, totalAmount, delivery, userId, promoCode, discount } = req.body
 
   try {
     const order = await Order.create({
@@ -45,22 +45,25 @@ router.post('/', async (req, res) => {
       items,
       totalAmount,
       delivery,
+      promoCode,
+      discount,
     })
 
+    // Send confirmation email to customer
     if (delivery.email) {
       try {
         await sendEmail({
           to: delivery.email,
-          subject: `✅ Order Confirmed — OBISCO Gadgets #${order._id}`,
+          subject: `✅ Order Confirmed — OBISCO Store #${order._id}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background-color: #f97316; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO <span style="font-weight: 300;">gadgets</span></h1>
+                <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO Store</h1>
               </div>
               <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                 <h2 style="color: #1f2937;">Order Confirmed! ✅</h2>
                 <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
-                  Hi <strong>${delivery.fullName}</strong>, thank you for shopping with OBISCO Gadgets!
+                  Hi <strong>${delivery.fullName}</strong>, thank you for shopping with OBISCO Store!
                 </p>
                 <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
                   <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 2px;">Your Order ID</p>
@@ -99,13 +102,13 @@ router.post('/', async (req, res) => {
                   <p style="color: #6b7280; font-size: 13px; margin: 4px 0;">📱 OPay — <strong>9049863067</strong> (Ariogba Patrick Obinna)</p>
                 </div>
                 <div style="text-align: center; margin: 24px 0;">
-                  <a href="http://localhost:5173" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
+                  <a href="https://obisco.store" style="background-color: #f97316; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
                     Track My Order
                   </a>
                 </div>
               </div>
               <div style="background-color: #111827; padding: 20px; border-radius: 0 0 12px 12px; text-align: center;">
-                <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Gadgets • Lagos, Nigeria</p>
+                <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Store • Lagos, Nigeria</p>
                 <p style="color: #6b7280; font-size: 11px; margin: 6px 0 0 0;">WhatsApp: +234 904 986 3067</p>
               </div>
             </div>
@@ -115,6 +118,55 @@ router.post('/', async (req, res) => {
       } catch (emailErr) {
         console.log('⚠️ Email failed but order was saved:', emailErr.message)
       }
+    }
+
+    // Notify admin of new order
+    try {
+      await sendEmail({
+        to: 'obiscolmt@gmail.com',
+        subject: `🛍️ New Order — ₦${totalAmount.toLocaleString()} — OBISCO Store`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #111827; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+              <h1 style="color: #f97316; margin: 0; font-size: 24px;">🛍️ New Order Received!</h1>
+            </div>
+            <div style="background-color: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+              <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: center;">
+                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase;">Total Amount</p>
+                <p style="color: #f97316; font-size: 28px; font-weight: 900; margin: 0;">₦${totalAmount.toLocaleString()}</p>
+              </div>
+              <div style="background-color: #f9fafb; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Name:</strong> ${delivery.fullName}</p>
+                <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Phone:</strong> ${delivery.phone}</p>
+                <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Email:</strong> ${delivery.email || 'Not provided'}</p>
+                <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Address:</strong> ${delivery.address}, ${delivery.city}, ${delivery.state}</p>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                ${items.map(item => `
+                  <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 8px 0;">
+                      <p style="color: #1f2937; font-size: 13px; font-weight: bold; margin: 0;">${item.name}</p>
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0;">${item.category}</p>
+                    </td>
+                    <td style="padding: 8px 0; text-align: right;">
+                      <p style="color: #6b7280; font-size: 13px; margin: 0;">x${item.quantity}</p>
+                      <p style="color: #f97316; font-size: 13px; font-weight: bold; margin: 0;">₦${(item.amount * item.quantity).toLocaleString()}</p>
+                    </td>
+                  </tr>
+                `).join('')}
+              </table>
+              <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; text-align: center;">
+                <p style="color: #15803d; font-size: 13px; margin: 0;">
+                  ⚡ Login to Admin Dashboard to update order status
+                </p>
+              </div>
+            </div>
+          </div>
+        `,
+      })
+      console.log('✅ Admin notified of new order')
+    } catch (adminEmailErr) {
+      console.log('⚠️ Admin notification failed:', adminEmailErr.message)
     }
 
     res.status(201).json({
@@ -138,19 +190,17 @@ router.get('/', async (req, res) => {
   }
 })
 
-// @route GET /api/orders/user/:userId — get orders by user (MUST be before /:id)
+// @route GET /api/orders/user/:userId
 router.get('/user/:userId', async (req, res) => {
   try {
-    console.log('🔍 Fetching orders for user:', req.params.userId)
     const orders = await Order.find({ user: req.params.userId }).sort({ createdAt: -1 })
-    console.log('📦 Orders found:', orders.length)
     res.json(orders)
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
 
-// @route GET /api/orders/:id — track single order (MUST be after /user/:userId)
+// @route GET /api/orders/:id — track single order
 router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -169,7 +219,6 @@ router.put('/:id', async (req, res) => {
 
   try {
     const order = await Order.findById(req.params.id)
-
     if (!order) {
       return res.status(404).json({ message: 'Order not found' })
     }
@@ -178,11 +227,9 @@ router.put('/:id', async (req, res) => {
     order.paymentStatus = paymentStatus
     await order.save()
 
-    console.log('📧 Order email:', order?.delivery?.email)
-
+    // Send status update email to customer
     if (order.delivery?.email) {
       const statusInfo = statusMessages[status]
-
       if (statusInfo) {
         try {
           await sendEmail({
@@ -191,7 +238,7 @@ router.put('/:id', async (req, res) => {
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: ${statusInfo.color}; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                  <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO <span style="font-weight: 300;">gadgets</span></h1>
+                  <h1 style="color: white; margin: 0; font-size: 28px;">OBISCO Store</h1>
                 </div>
                 <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                   <div style="text-align: center; margin-bottom: 20px;">
@@ -209,7 +256,7 @@ router.put('/:id', async (req, res) => {
                       <tr style="border-bottom: 1px solid #f3f4f6;">
                         <td style="padding: 10px 0;">
                           <p style="color: #1f2937; font-size: 14px; font-weight: bold; margin: 0;">${item.name}</p>
-                          <p style="color: #9ca3af; font-size: 12px; margin: 2px 0;">${item.category} ${item.color ? `— ${item.color}` : ''}</p>
+                          <p style="color: #9ca3af; font-size: 12px; margin: 2px 0;">${item.category}</p>
                         </td>
                         <td style="padding: 10px 0; text-align: right;">
                           <p style="color: #6b7280; font-size: 13px; margin: 0;">x${item.quantity}</p>
@@ -232,13 +279,13 @@ router.put('/:id', async (req, res) => {
                   </div>
                   ` : ''}
                   <div style="text-align: center; margin: 24px 0;">
-                    <a href="http://localhost:5173" style="background-color: ${statusInfo.color}; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
+                    <a href="https://obisco.store" style="background-color: ${statusInfo.color}; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 15px;">
                       Track My Order
                     </a>
                   </div>
                 </div>
                 <div style="background-color: #111827; padding: 20px; border-radius: 0 0 12px 12px; text-align: center;">
-                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Gadgets • Lagos, Nigeria</p>
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">© 2025 OBISCO Store • Lagos, Nigeria</p>
                   <p style="color: #6b7280; font-size: 11px; margin: 6px 0 0 0;">WhatsApp: +234 904 986 3067</p>
                 </div>
               </div>
@@ -257,62 +304,5 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
-
-
-// Notify admin of new order
-try {
-  await sendEmail({
-    to: 'obiscolmt@gmail.com',
-    subject: `🛍️ New Order — ₦${totalAmount.toLocaleString()} — OBISCO Gadgets`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background-color: #111827; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-          <h1 style="color: #f97316; margin: 0; font-size: 24px;">🛍️ New Order Received!</h1>
-        </div>
-        <div style="background-color: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-          
-          <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: center;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase;">Total Amount</p>
-            <p style="color: #f97316; font-size: 28px; font-weight: 900; margin: 0;">₦${totalAmount.toLocaleString()}</p>
-          </div>
-
-          <p style="color: #374151; font-size: 14px; font-weight: bold; margin-bottom: 4px;">📍 Customer Details</p>
-          <div style="background-color: #f9fafb; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-            <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Name:</strong> ${delivery.fullName}</p>
-            <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Phone:</strong> ${delivery.phone}</p>
-            <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Email:</strong> ${delivery.email || 'Not provided'}</p>
-            <p style="color: #1f2937; font-size: 14px; margin: 2px 0;"><strong>Address:</strong> ${delivery.address}, ${delivery.city}, ${delivery.state}</p>
-          </div>
-
-          <p style="color: #374151; font-size: 14px; font-weight: bold; margin-bottom: 4px;">🛒 Items Ordered</p>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
-            ${items.map(item => `
-              <tr style="border-bottom: 1px solid #f3f4f6;">
-                <td style="padding: 8px 0;">
-                  <p style="color: #1f2937; font-size: 13px; font-weight: bold; margin: 0;">${item.name}</p>
-                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">${item.category} ${item.color ? `— ${item.color}` : ''}</p>
-                </td>
-                <td style="padding: 8px 0; text-align: right;">
-                  <p style="color: #6b7280; font-size: 13px; margin: 0;">x${item.quantity}</p>
-                  <p style="color: #f97316; font-size: 13px; font-weight: bold; margin: 0;">₦${(item.amount * item.quantity).toLocaleString()}</p>
-                </td>
-              </tr>
-            `).join('')}
-          </table>
-
-          <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; text-align: center;">
-            <p style="color: #15803d; font-size: 13px; margin: 0;">
-              ⚡ Login to Admin Dashboard to update order status
-            </p>
-          </div>
-
-        </div>
-      </div>
-    `,
-  })
-  console.log('✅ Admin notified of new order')
-} catch (adminEmailErr) {
-  console.log('⚠️ Admin notification failed:', adminEmailErr.message)
-}
 
 export default router
