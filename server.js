@@ -2,6 +2,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import rateLimit from 'express-rate-limit'
 
 import authRoutes from './routes/Auth.js'
 import productRoutes from './routes/Products.js'
@@ -19,6 +20,26 @@ const app = express()
 // Middleware
 app.use(cors())
 app.use(express.json())
+
+app.use(cors())
+app.use(express.json())
+
+// General rate limit — 100 requests per 15 minutes per IP
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many requests. Please try again later.' }
+})
+
+// Strict limit for auth routes — 10 attempts per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many login attempts. Please try again later.' }
+})
+
+app.use(limiter)
+app.use('/api/auth', authLimiter)
 
 
 // Routes
