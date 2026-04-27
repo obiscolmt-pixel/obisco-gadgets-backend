@@ -396,4 +396,16 @@ router.post('/google-userinfo', async (req, res) => {
   }
 })
 
+// @route GET /api/auth/users — get all users (admin)
+router.get('/users', async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .sort({ createdAt: -1 })
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message })
+  }
+})
+
 export default router
