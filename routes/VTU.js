@@ -3,20 +3,21 @@ import axios from 'axios';
 
 const router = express.Router();
 
-// VTpass credentials from environment variables
-const VTPASS_BASE_URL = process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api';
-const VTPASS_PUBLIC_KEY = process.env.VTPASS_PUBLIC_KEY;
-const VTPASS_SECRET_KEY = process.env.VTPASS_SECRET_KEY;
-const VTPASS_EMAIL = process.env.VTPASS_EMAIL;
-const VTPASS_PASSWORD = process.env.VTPASS_PASSWORD;
+// Read env vars at request time (not module load time)
+// This fixes the ES Module dotenv timing issue
+const getHeaders = () => ({
+  'api-key': process.env.VTPASS_API_KEY,
+  'public-key': process.env.VTPASS_PUBLIC_KEY,
+});
 
-// Generate Basic Auth token
-const getBasicAuth = () => {
-  const credentials = Buffer.from(`${VTPASS_EMAIL}:${VTPASS_PASSWORD}`).toString('base64');
-  return `Basic ${credentials}`;
-};
+const postHeaders = () => ({
+  'api-key': process.env.VTPASS_API_KEY,
+  'secret-key': process.env.VTPASS_SECRET_KEY,
+  'Content-Type': 'application/json',
+});
 
-// Generate unique request ID
+const baseURL = () => process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api';
+
 const generateRequestId = () => {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -26,52 +27,43 @@ const generateRequestId = () => {
 // ─── GET WALLET BALANCE ───────────────────────────────────────────────────────
 router.get('/balance', async (req, res) => {
   try {
-    const response = await axios.get(`${VTPASS_BASE_URL}/balance`, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Authorization': getBasicAuth(),
-      }
+    const response = await axios.get(`${baseURL()}/balance`, {
+      headers: getHeaders()
     });
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Balance error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ─── GET SERVICE VARIATIONS (Data plans, Cable bouquets, etc.) ───────────────
+// ─── GET SERVICE VARIATIONS ───────────────────────────────────────────────────
 router.get('/variations/:serviceID', async (req, res) => {
   try {
     const { serviceID } = req.params;
-    const response = await axios.get(`${VTPASS_BASE_URL}/service-variations?serviceID=${serviceID}`, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Authorization': getBasicAuth(),
-      }
+    const response = await axios.get(`${baseURL()}/service-variations?serviceID=${serviceID}`, {
+      headers: getHeaders()
     });
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Variations error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ─── VERIFY METER / SMART CARD NUMBER ────────────────────────────────────────
+// ─── VERIFY METER / SMART CARD ────────────────────────────────────────────────
 router.post('/verify', async (req, res) => {
   try {
     const { billersCode, serviceID, type } = req.body;
-    const response = await axios.post(`${VTPASS_BASE_URL}/merchant-verify`, {
+    const response = await axios.post(`${baseURL()}/merchant-verify`, {
       billersCode,
       serviceID,
       type
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
-    });
+    }, { headers: postHeaders() });
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Verify error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
@@ -80,7 +72,6 @@ router.post('/airtime', async (req, res) => {
   try {
     const { network, phone, amount } = req.body;
 
-    // Validate
     if (!network || !phone || !amount) {
       return res.status(400).json({ error: 'network, phone, and amount are required' });
     }
@@ -89,24 +80,26 @@ router.post('/airtime', async (req, res) => {
     }
 
     const requestId = generateRequestId();
-
-    const response = await axios.post(`${VTPASS_BASE_URL}/pay`, {
+    const payload = {
       request_id: requestId,
-      serviceID: network, // mtn, airtel, glo, etisalat
+      serviceID: network,
       amount: amount,
       phone: phone,
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Secret-Key': VTPASS_SECRET_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
+    };
+
+    console.log('Airtime payload:', payload);
+    console.log('API KEY at runtime:', process.env.VTPASS_API_KEY?.slice(0, 8));
+
+    const response = await axios.post(`${baseURL()}/pay`, payload, {
+      headers: postHeaders()
     });
 
+    console.log('Airtime response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Airtime error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
@@ -115,66 +108,56 @@ router.post('/data', async (req, res) => {
   try {
     const { network, phone, variationCode, amount } = req.body;
 
-    // network data serviceIDs: mtn-data, airtel-data, glo-data, etisalat-data
     if (!network || !phone || !variationCode) {
       return res.status(400).json({ error: 'network, phone, and variationCode are required' });
     }
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${VTPASS_BASE_URL}/pay`, {
+    const response = await axios.post(`${baseURL()}/pay`, {
       request_id: requestId,
-      serviceID: network, // e.g. mtn-data
+      serviceID: network,
       billersCode: phone,
       variation_code: variationCode,
       amount: amount,
       phone: phone,
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Secret-Key': VTPASS_SECRET_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
-    });
+    }, { headers: postHeaders() });
 
+    console.log('Data response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Data error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ─── PAY ELECTRICITY BILL ─────────────────────────────────────────────────────
+// ─── PAY ELECTRICITY ──────────────────────────────────────────────────────────
 router.post('/electricity', async (req, res) => {
   try {
     const { disco, meterNumber, meterType, amount, phone } = req.body;
 
-    // disco serviceIDs: ikeja-electric, eko-electric, kano-electric, phed, etc.
     if (!disco || !meterNumber || !meterType || !amount || !phone) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${VTPASS_BASE_URL}/pay`, {
+    const response = await axios.post(`${baseURL()}/pay`, {
       request_id: requestId,
       serviceID: disco,
       billersCode: meterNumber,
-      variation_code: meterType, // prepaid or postpaid
+      variation_code: meterType,
       amount: amount,
       phone: phone,
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Secret-Key': VTPASS_SECRET_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
-    });
+    }, { headers: postHeaders() });
 
+    console.log('Electricity response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Electricity error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
@@ -183,51 +166,41 @@ router.post('/cable', async (req, res) => {
   try {
     const { provider, smartCardNumber, variationCode, amount, phone } = req.body;
 
-    // provider serviceIDs: dstv, gotv, startimes
     if (!provider || !smartCardNumber || !variationCode || !phone) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${VTPASS_BASE_URL}/pay`, {
+    const response = await axios.post(`${baseURL()}/pay`, {
       request_id: requestId,
       serviceID: provider,
       billersCode: smartCardNumber,
       variation_code: variationCode,
       amount: amount,
       phone: phone,
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Secret-Key': VTPASS_SECRET_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
-    });
+    }, { headers: postHeaders() });
 
+    console.log('Cable response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Cable error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ─── QUERY TRANSACTION STATUS ─────────────────────────────────────────────────
+// ─── QUERY TRANSACTION ────────────────────────────────────────────────────────
 router.post('/requery', async (req, res) => {
   try {
     const { requestId } = req.body;
-    const response = await axios.post(`${VTPASS_BASE_URL}/requery`, {
+    const response = await axios.post(`${baseURL()}/requery`, {
       request_id: requestId
-    }, {
-      headers: {
-        'Public-Key': VTPASS_PUBLIC_KEY,
-        'Authorization': getBasicAuth(),
-        'Content-Type': 'application/json'
-      }
-    });
+    }, { headers: postHeaders() });
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Requery error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
