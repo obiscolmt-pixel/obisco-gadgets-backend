@@ -12,6 +12,8 @@ import chatRoutes from './routes/Chat.js'
 import promoRoutes from './routes/Promo.js'
 import businessRegRoutes from './routes/BusinessReg.js'
 import broadcastRoutes from './routes/Broadcast.js'
+import vtuRoutes from './routes/VTU.js';
+
 
 dotenv.config()
 
@@ -51,6 +53,7 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/promo', promoRoutes)
 app.use('/api/business', businessRegRoutes)
 app.use('/api/broadcast', broadcastRoutes)
+app.use('/api/vtu', vtuRoutes);
 
 
 // Test route
