@@ -13,18 +13,23 @@ import promoRoutes from './routes/Promo.js'
 import businessRegRoutes from './routes/BusinessReg.js'
 import broadcastRoutes from './routes/Broadcast.js'
 import vtuRoutes from './routes/VTU.js';
+import cookieParser from 'cookie-parser'
+import cookieRoutes from './routes/Cookies.js'
 
 
 dotenv.config()
 
 const app = express()
 
-// Middleware
-app.use(cors())
-app.use(express.json())
+// ✅ CORS with credentials support
+app.use(cors({
+  origin: ['https://obisco.store', 'http://localhost:5173'],
+  credentials: true
+}))
 
-app.use(cors())
+// Middleware
 app.use(express.json())
+app.use(cookieParser())
 
 // General rate limit — 100 requests per 15 minutes per IP
 const limiter = rateLimit({
@@ -54,12 +59,26 @@ app.use('/api/promo', promoRoutes)
 app.use('/api/business', businessRegRoutes)
 app.use('/api/broadcast', broadcastRoutes)
 app.use('/api/vtu', vtuRoutes);
+app.use('/api/cookies', cookieRoutes)
 
 
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'OBISCO Gadgets API is running!' })
 })
+
+
+
+  // Admin verify route
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body
+  if (password === process.env.ADMIN_PASSWORD) {
+    res.json({ success: true })
+  } else {
+    res.status(401).json({ success: false, message: 'Wrong password' })
+  }
+})
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -72,14 +91,3 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => {
     console.log('❌ MongoDB connection error:', err.message)
   })
-
-
-  // Admin verify route
-app.post('/api/admin/verify', (req, res) => {
-  const { password } = req.body
-  if (password === process.env.ADMIN_PASSWORD) {
-    res.json({ success: true })
-  } else {
-    res.status(401).json({ success: false, message: 'Wrong password' })
-  }
-})
