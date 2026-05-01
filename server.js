@@ -22,8 +22,21 @@ dotenv.config()
 const app = express()
 
 // ✅ CORS with credentials support
+// ✅ CORS with credentials support
+const allowedOrigins = [
+  'https://obisco.store',
+  'https://www.obisco.store',
+  'http://localhost:5173',
+  'http://localhost:5174',
+]
+
 app.use(cors({
-  origin: ['https://obisco.store', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true)
+    if (origin.endsWith('.vercel.app')) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    return callback(null, true)
+  },
   credentials: true
 }))
 
