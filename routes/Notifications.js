@@ -4,7 +4,10 @@ import { createRequire } from 'module'
 import User from '../models/User.js'
 
 const require = createRequire(import.meta.url)
-const serviceAccount = require('../serviceAccountKey.json')
+const path = process.env.NODE_ENV === 'production' 
+  ? '/etc/secrets/serviceAccountKey.json'
+  : '../serviceAccountKey.json'
+const serviceAccount = require(path)
 
 // Initialize Firebase Admin only once
 if (!admin.apps.length) {
