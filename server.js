@@ -15,6 +15,8 @@ import broadcastRoutes from './routes/Broadcast.js'
 import vtuRoutes from './routes/VTU.js';
 import cookieParser from 'cookie-parser'
 import cookieRoutes from './routes/Cookies.js'
+import notificationsRouter from './routes/Notifications.js'
+
 
 
 dotenv.config()
@@ -71,6 +73,7 @@ app.use('/api/business', businessRegRoutes)
 app.use('/api/broadcast', broadcastRoutes)
 app.use('/api/vtu', vtuRoutes);
 app.use('/api/cookies', cookieRoutes)
+app.use('/api/notifications', notificationsRouter)
 
 
 // Test route

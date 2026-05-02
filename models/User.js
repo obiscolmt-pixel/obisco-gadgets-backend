@@ -32,7 +32,14 @@ const userSchema = new mongoose.Schema({
   isGoogleUser: {
     type: Boolean,
     default: false,
+  },
+
+  fcmToken: {
+    type: String,
+    default: null,
   }
+
+  
 }, { timestamps: true })
 
 export default mongoose.model('User', userSchema)
