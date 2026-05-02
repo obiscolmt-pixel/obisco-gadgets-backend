@@ -20,6 +20,7 @@ import cookieRoutes from './routes/Cookies.js'
 dotenv.config()
 
 const app = express()
+app.set('trust proxy', 1)
 
 // ✅ CORS — allow all origins
 app.use(cors({
