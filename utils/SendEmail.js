@@ -1,25 +1,30 @@
-import nodemailer from 'nodemailer'
-
 const sendEmail = async ({ to, subject, html }) => {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.BREVO_SMTP_USER,
-      pass: process.env.BREVO_SMTP_PASS,
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
     },
+    body: JSON.stringify({
+      sender: {
+        name: 'OBISCO Gadgets',
+        email: process.env.EMAIL_USER,
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
   })
 
-  const info = await transporter.sendMail({
-    from: `"OBISCO Gadgets" <obiscolmt@gmail.com>`,
-    to,
-    subject,
-    html,
-  })
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Email failed')
+  }
 
   console.log('✅ Email sent to:', to)
-  console.log('📧 Message ID:', info.messageId)
+  return data
 }
 
 export default sendEmail
