@@ -2,6 +2,7 @@ import express from 'express'
 import admin from 'firebase-admin'
 import { createRequire } from 'module'
 import User from '../models/User.js'
+import jwt from 'jsonwebtoken'
 
 const require = createRequire(import.meta.url)
 const path = process.env.NODE_ENV === 'production' 
@@ -19,19 +20,38 @@ if (!admin.apps.length) {
 const router = express.Router()
 
 // Save FCM token
+// Save FCM token
 router.post('/save-token', async (req, res) => {
   try {
     const { token } = req.body
     if (!token) return res.status(400).json({ message: 'Token required' })
 
+    // Try to find logged in user from JWT cookie
     const authHeader = req.headers.authorization
-    if (authHeader) {
-      const jwt = await import('jsonwebtoken')
-      const decoded = jwt.default.verify(
-        authHeader.replace('Bearer ', ''),
-        process.env.JWT_SECRET
+    const cookieToken = req.cookies?.token
+
+    let userId = null
+
+    if (authHeader || cookieToken) {
+      try {
+        const jwtToken = authHeader?.replace('Bearer ', '') || cookieToken
+        const decoded = jwt.verify(jwtToken, process.env.JWT_SECRET)
+        userId = decoded.id
+      } catch (e) {
+        // Not logged in, that's fine
+      }
+    }
+
+    if (userId) {
+      // Save to logged in user
+      await User.findByIdAndUpdate(userId, { fcmToken: token })
+    } else {
+      // Save as guest — find existing guest or create one
+      await User.findOneAndUpdate(
+        { fcmToken: token },
+        { fcmToken: token },
+        { upsert: true, new: true }
       )
-      await User.findByIdAndUpdate(decoded.id, { fcmToken: token })
     }
 
     res.json({ message: 'Token saved' })
