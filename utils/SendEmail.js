@@ -8,7 +8,7 @@ const sendEmail = async ({ to, subject, html }) => {
     },
     body: JSON.stringify({
       sender: {
-        name: 'OBISCO Gadgets',
+        name: 'OBISCO STORE',
         email: process.env.EMAIL_USER,
       },
       to: [{ email: to }],
