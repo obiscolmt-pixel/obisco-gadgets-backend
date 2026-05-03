@@ -10,7 +10,6 @@ const path = process.env.NODE_ENV === 'production'
   : '../serviceAccountKey.json'
 const serviceAccount = require(path)
 
-// Initialize Firebase Admin only once
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
@@ -24,7 +23,6 @@ if (!admin.apps.length) {
 
 const router = express.Router()
 
-// Save FCM token
 router.post('/save-token', async (req, res) => {
   try {
     const { token } = req.body
@@ -47,12 +45,10 @@ router.post('/save-token', async (req, res) => {
 
     if (userId) {
       await User.findByIdAndUpdate(userId, { fcmToken: token })
+      console.log('✅ FCM token saved for user:', userId)
     } else {
-      await User.findOneAndUpdate(
-        { fcmToken: token },
-        { fcmToken: token },
-        { upsert: true, new: true }
-      )
+      // Guest user — store token in localStorage on frontend instead
+      return res.json({ message: 'Token received (guest - not saved)' })
     }
 
     res.json({ message: 'Token saved' })
@@ -62,7 +58,6 @@ router.post('/save-token', async (req, res) => {
   }
 })
 
-// Send push notification to all users (admin only)
 router.post('/send', async (req, res) => {
   try {
     const { title, body, adminPassword } = req.body
