@@ -12,21 +12,24 @@ const serviceAccount = require(path)
 
 // Initialize Firebase Admin only once
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  })
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    })
+    console.log('✅ Firebase Admin initialized')
+  } catch (e) {
+    console.error('❌ Firebase Admin init error:', e.message)
+  }
 }
 
 const router = express.Router()
 
-// Save FCM token
 // Save FCM token
 router.post('/save-token', async (req, res) => {
   try {
     const { token } = req.body
     if (!token) return res.status(400).json({ message: 'Token required' })
 
-    // Try to find logged in user from JWT cookie
     const authHeader = req.headers.authorization
     const cookieToken = req.cookies?.token
 
@@ -43,10 +46,8 @@ router.post('/save-token', async (req, res) => {
     }
 
     if (userId) {
-      // Save to logged in user
       await User.findByIdAndUpdate(userId, { fcmToken: token })
     } else {
-      // Save as guest — find existing guest or create one
       await User.findOneAndUpdate(
         { fcmToken: token },
         { fcmToken: token },
@@ -56,6 +57,7 @@ router.post('/save-token', async (req, res) => {
 
     res.json({ message: 'Token saved' })
   } catch (err) {
+    console.error('❌ save-token error:', err.message)
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
@@ -88,6 +90,7 @@ router.post('/send', async (req, res) => {
       failureCount: response.failureCount
     })
   } catch (err) {
+    console.error('❌ send notification error:', err.message)
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
