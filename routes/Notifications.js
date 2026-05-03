@@ -2,6 +2,7 @@ import express from 'express'
 import admin from 'firebase-admin'
 import { createRequire } from 'module'
 import User from '../models/User.js'
+import GuestToken from '../models/GuestToken.js'
 import jwt from 'jsonwebtoken'
 
 const require = createRequire(import.meta.url)
@@ -44,11 +45,17 @@ router.post('/save-token', async (req, res) => {
     }
 
     if (userId) {
+      // Save to logged in user
       await User.findByIdAndUpdate(userId, { fcmToken: token })
       console.log('✅ FCM token saved for user:', userId)
     } else {
-      // Guest user — store token in localStorage on frontend instead
-      return res.json({ message: 'Token received (guest - not saved)' })
+      // Save as guest token
+      await GuestToken.findOneAndUpdate(
+        { fcmToken: token },
+        { fcmToken: token },
+        { upsert: true, new: true }
+      )
+      console.log('✅ FCM token saved for guest')
     }
 
     res.json({ message: 'Token saved' })
@@ -66,8 +73,14 @@ router.post('/send', async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' })
     }
 
+    // Get tokens from both logged-in users and guests
     const users = await User.find({ fcmToken: { $exists: true, $ne: null } })
-    const tokens = users.map(u => u.fcmToken).filter(Boolean)
+    const guests = await GuestToken.find({})
+
+    const tokens = [
+      ...users.map(u => u.fcmToken),
+      ...guests.map(g => g.fcmToken)
+    ].filter(Boolean)
 
     if (tokens.length === 0) {
       return res.status(400).json({ message: 'No users with notifications enabled' })
