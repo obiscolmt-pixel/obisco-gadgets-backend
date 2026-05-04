@@ -408,4 +408,38 @@ router.get('/users', async (req, res) => {
   }
 })
 
+// Update profile
+router.put('/update-profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]
+    if (!token) return res.status(401).json({ message: 'Unauthorized' })
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { fullName: req.body.fullName, phone: req.body.phone },
+      { new: true }
+    ).select('-password')
+    res.json({ user })
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update profile' })
+  }
+})
+
+// Change password
+router.put('/change-password', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]
+    if (!token) return res.status(401).json({ message: 'Unauthorized' })
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findById(decoded.id)
+    const isMatch = await bcrypt.compare(req.body.currentPassword, user.password)
+    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' })
+    user.password = await bcrypt.hash(req.body.newPassword, 10)
+    await user.save()
+    res.json({ message: 'Password changed successfully' })
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to change password' })
+  }
+})
+
 export default router
