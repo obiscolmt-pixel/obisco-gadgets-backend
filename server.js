@@ -16,6 +16,7 @@ import vtuRoutes from './routes/VTU.js';
 import cookieParser from 'cookie-parser'
 import cookieRoutes from './routes/Cookies.js'
 import notificationsRouter from './routes/Notifications.js'
+import paystackRoutes from './routes/Paystack.js'
 
 
 
@@ -74,6 +75,7 @@ app.use('/api/broadcast', broadcastRoutes)
 app.use('/api/vtu', vtuRoutes);
 app.use('/api/cookies', cookieRoutes)
 app.use('/api/notifications', notificationsRouter)
+app.use('/api/paystack', paystackRoutes)
 
 
 // Test route
