@@ -1,3 +1,9 @@
+import express from 'express'
+import User from '../models/User.js'
+import sendEmail from '../utils/SendEmail.js'
+
+const router = express.Router()
+
 router.post('/send', async (req, res) => {
   const { subject, message, adminPassword } = req.body
 
@@ -63,3 +69,5 @@ router.post('/send', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
+
+export default router
