@@ -1,13 +1,6 @@
-import express from 'express'
-import User from '../models/User.js'
-import sendEmail from '../utils/SendEmail.js'
-
-const router = express.Router()
-
 router.post('/send', async (req, res) => {
   const { subject, message, adminPassword } = req.body
 
-  // Verify admin password
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ message: 'Unauthorized' })
   }
@@ -20,6 +13,13 @@ router.post('/send', async (req, res) => {
       return res.status(400).json({ message: 'No users found.' })
     }
 
+    // ✅ Respond immediately so it doesn't timeout
+    res.json({
+      message: `Broadcast started! Sending to ${emails.length} users in background...`,
+      total: emails.length,
+    })
+
+    // ✅ Send emails in background after response
     let sent = 0
     let failed = 0
 
@@ -57,15 +57,9 @@ router.post('/send', async (req, res) => {
       }
     }
 
-    res.json({
-      message: `Broadcast complete! Sent: ${sent}, Failed: ${failed}`,
-      sent,
-      failed,
-      total: emails.length,
-    })
+    console.log(`Broadcast complete! Sent: ${sent}, Failed: ${failed}`)
+
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 })
-
-export default router
