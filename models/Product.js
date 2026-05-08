@@ -42,6 +42,18 @@ const productSchema = new mongoose.Schema({
       image: { type: String },
     }
   ],
+
+  // ── Seller Field ──
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  sellerName: {
+    type: String,
+    default: 'OBISCO Store',
+  },
+
 }, { timestamps: true })
 
 export default mongoose.model('Product', productSchema)
