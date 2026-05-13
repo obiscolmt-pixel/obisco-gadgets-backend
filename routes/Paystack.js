@@ -1,8 +1,8 @@
 import express from 'express'
 import crypto from 'crypto'
 import Order from '../models/Order.js'
-import Wallet from '../models/Wallet.js'
-import WalletTransaction from '../models/WalletTransaction.js'
+import Wallet from '../models/wallet.js'
+import WalletTransaction from '../models/walletTransaction.js'
 
 const router = express.Router()
 
