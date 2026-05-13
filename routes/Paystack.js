@@ -1,6 +1,8 @@
 import express from 'express'
 import crypto from 'crypto'
 import Order from '../models/Order.js'
+import Wallet from '../models/Wallet.js'
+import WalletTransaction from '../models/WalletTransaction.js'
 
 const router = express.Router()
 
@@ -17,7 +19,7 @@ router.post('/initialize', async (req, res) => {
       },
       body: JSON.stringify({
         email,
-        amount: amount * 100, // Paystack uses kobo
+        amount: amount * 100,
         reference: orderId,
         metadata,
         callback_url: 'https://www.obisco.store'
@@ -46,7 +48,6 @@ router.get('/verify/:reference', async (req, res) => {
     const data = await response.json()
 
     if (data.data?.status === 'success') {
-      // Update order payment status
       await Order.findByIdAndUpdate(reference, { paymentStatus: 'paid' })
     }
 
@@ -57,7 +58,7 @@ router.get('/verify/:reference', async (req, res) => {
   }
 })
 
-// Webhook - Paystack notifies us of payment
+// Webhook
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const hash = crypto
@@ -73,8 +74,36 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     if (event.event === 'charge.success') {
       const reference = event.data.reference
-      await Order.findByIdAndUpdate(reference, { paymentStatus: 'paid' })
-      console.log('✅ Payment confirmed via webhook:', reference)
+      const metadata = event.data.metadata
+
+      // ── Wallet funding ──
+      if (metadata?.type === 'wallet_funding') {
+        const userId = metadata.userId
+        const amount = event.data.amount / 100 // convert from kobo to naira
+
+        let wallet = await Wallet.findOne({ user: userId })
+        if (!wallet) {
+          wallet = await Wallet.create({ user: userId, balance: 0 })
+        }
+
+        wallet.balance += amount
+        await wallet.save()
+
+        await WalletTransaction.create({
+          user: userId,
+          type: 'credit',
+          amount,
+          description: `Wallet funded via Paystack`,
+          reference,
+          status: 'success'
+        })
+
+        console.log(`✅ Wallet credited ₦${amount} for user ${userId}`)
+      } else {
+        // ── Regular order payment ──
+        await Order.findByIdAndUpdate(reference, { paymentStatus: 'paid' })
+        console.log('✅ Order payment confirmed via webhook:', reference)
+      }
     }
 
     res.sendStatus(200)

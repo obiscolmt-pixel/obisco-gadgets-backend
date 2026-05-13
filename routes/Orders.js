@@ -1,6 +1,7 @@
 import express from 'express'
 import Order from '../models/Order.js'
 import sendEmail from '../utils/SendEmail.js'
+import { deductFromWallet } from './wallet.js'
 
 const router = express.Router()
 
@@ -36,10 +37,28 @@ const statusMessages = {
 }
 
 // @route POST /api/orders — place an order
-router.post('/', async (req, res) => {
-  const { items, totalAmount, delivery, userId, promoCode, discount } = req.body
+
+  router.post('/', async (req, res) => {
+  const { items, totalAmount, delivery, userId, promoCode, discount, paymentMethod } = req.body
 
   try {
+    // ── Wallet payment ──
+    if (paymentMethod === 'wallet') {
+      if (!userId) {
+        return res.status(401).json({ message: 'You must be logged in to pay with wallet' })
+      }
+      try {
+        await deductFromWallet(
+          userId,
+          totalAmount,
+          `Order payment — ${items.length} item(s)`,
+          `ORDER_${Date.now()}`
+        )
+      } catch (walletErr) {
+        return res.status(400).json({ message: walletErr.message })
+      }
+    }
+
     const order = await Order.create({
       user: userId || null,
       items,
@@ -47,7 +66,10 @@ router.post('/', async (req, res) => {
       delivery,
       promoCode,
       discount,
+      paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'pending'
     })
+
+    // ... rest of your email code stays exactly the same
 
     // Send confirmation email to customer
     if (delivery.email) {

@@ -18,6 +18,7 @@ import cookieRoutes from './routes/Cookies.js'
 import notificationsRouter from './routes/Notifications.js'
 import paystackRoutes from './routes/Paystack.js'
 import sellerRoutes from './routes/Seller.js'
+import walletRouter from './routes/wallet.js'
 
 
 
@@ -78,6 +79,7 @@ app.use('/api/cookies', cookieRoutes)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/paystack', paystackRoutes)
 app.use('/api/seller', sellerRoutes)
+app.use('/api/wallet', walletRouter)
 
 
 
