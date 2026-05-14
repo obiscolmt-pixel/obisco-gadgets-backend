@@ -59,6 +59,11 @@ const productSchema = new mongoose.Schema({
     default: false,
   },
 
+  hotDeal: {
+  type: Boolean,
+  default: false,
+},
+
 }, { timestamps: true })
 
 export default mongoose.model('Product', productSchema)
