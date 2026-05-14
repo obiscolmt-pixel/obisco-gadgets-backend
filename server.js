@@ -33,15 +33,8 @@ app.use(cors({
   credentials: true
 }))
 
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin) return callback(null, true)
-//     if (origin.endsWith('.vercel.app')) return callback(null, true)
-//     if (allowedOrigins.includes(origin)) return callback(null, true)
-//     return callback(null, true)
-//   },
-//   credentials: true
-// }))
+// ── Paystack webhook MUST come before express.json() ──
+app.use('/api/paystack/webhook', express.raw({ type: 'application/json' }))
 
 // Middleware
 app.use(express.json())
