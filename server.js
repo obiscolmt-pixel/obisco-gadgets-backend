@@ -106,30 +106,4 @@ mongoose.connect(process.env.MONGO_URI)
     console.log('❌ MongoDB connection error:', err.message)
   })
   
-  import Product from './models/Product.js'
-
-// add this route
-app.get('/api/fix-departments', async (req, res) => {
-  try {
-    const gadgets = await Product.updateMany(
-      { category: { $in: ['phones', 'laptops', 'tablets', 'speakers', 'accessories', 'chargers', 'headphones', 'earbuds'] } },
-      { $set: { department: 'gadgets' } }
-    )
-    const fashion = await Product.updateMany(
-      { category: { $in: ['men', 'women', 'native'] } },
-      { $set: { department: 'fashion' } }
-    )
-    const lifestyle = await Product.updateMany(
-      { category: { $in: ['watches', 'perfumes'] } },
-      { $set: { department: 'lifestyle' } }
-    )
-    res.json({
-      message: 'Departments fixed!',
-      gadgets: gadgets.modifiedCount,
-      fashion: fashion.modifiedCount,
-      lifestyle: lifestyle.modifiedCount
-    })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+  
