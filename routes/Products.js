@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
         $lookup: {
           from: 'reviews',
           localField: '_id',
-          foreignField: 'productId',
+          foreignField: 'product',
           as: 'reviews'
         }
       },
