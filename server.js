@@ -19,6 +19,7 @@ import notificationsRouter from './routes/Notifications.js'
 import paystackRoutes from './routes/Paystack.js'
 import sellerRoutes from './routes/Seller.js'
 import walletRouter from './routes/wallet.js'
+import adminRoutes from './routes/Admin.js'
 
 
 
@@ -73,6 +74,7 @@ app.use('/api/notifications', notificationsRouter)
 app.use('/api/paystack', paystackRoutes)
 app.use('/api/seller', sellerRoutes)
 app.use('/api/wallet', walletRouter)
+app.use('/api/admin', adminRoutes)
 
 
 
