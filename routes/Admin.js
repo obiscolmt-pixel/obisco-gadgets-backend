@@ -80,4 +80,27 @@ router.post('/broadcast-sms', async (req, res) => {
   }
 })
 
+// ── Test SMS ──
+router.post('/test-sms', async (req, res) => {
+  if (!verifyAdmin(req, res)) return
+  try {
+    const response = await fetch('https://v3.api.termii.com/api/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '2349049863067',
+        from: process.env.TERMII_SENDER_ID,
+        sms: 'Test from Obisco Store backend',
+        type: 'plain',
+        api_key: process.env.TERMII_API_KEY,
+        channel: 'generic'
+      })
+    })
+    const data = await response.json()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 export default router
