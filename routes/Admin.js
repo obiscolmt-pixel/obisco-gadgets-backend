@@ -13,6 +13,14 @@ const verifyAdmin = (req, res) => {
   return true
 }
 
+const normalizePhone = (phone) => {
+  let p = phone.toString().trim().replace(/\s+/g, '').replace(/-/g, '')
+  if (p.startsWith('+234')) p = p.slice(1)
+  if (p.startsWith('234')) return p
+  if (p.startsWith('0')) return '234' + p.slice(1)
+  return '234' + p
+}
+
 // ── Broadcast Email ──
 router.post('/broadcast-email', async (req, res) => {
   if (!verifyAdmin(req, res)) return
@@ -63,8 +71,8 @@ router.post('/broadcast-sms', async (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: user.phone,
-            from: process.env.TERMII_SENDER_ID, // 'ObiscoStore'
+            to: normalizePhone(user.phone),
+            from: process.env.TERMII_SENDER_ID,
             sms: message.replace('{name}', user.fullName?.split(' ')[0] || 'Valued Customer'),
             type: 'plain',
             api_key: process.env.TERMII_API_KEY,
@@ -77,29 +85,6 @@ router.post('/broadcast-sms', async (req, res) => {
     res.json({ message: `SMS sent to ${sent} of ${users.length} users` })
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
-  }
-})
-
-// ── Test SMS ──
-router.post('/test-sms', async (req, res) => {
-  if (!verifyAdmin(req, res)) return
-  try {
-    const response = await fetch('https://v3.api.termii.com/api/sms/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: '2349049863067',
-        from: process.env.TERMII_SENDER_ID,
-        sms: 'Test from Obisco Store backend',
-        type: 'plain',
-        api_key: process.env.TERMII_API_KEY,
-        channel: 'generic'
-      })
-    })
-    const data = await response.json()
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
   }
 })
 
