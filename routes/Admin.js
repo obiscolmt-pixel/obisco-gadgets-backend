@@ -59,12 +59,12 @@ router.post('/broadcast-sms', async (req, res) => {
 
     const results = await Promise.allSettled(
       users.map(user =>
-        fetch('https://api.ng.termii.com/api/sms/send', {
+        fetch('https://v3.api.termii.com/api/sms/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: user.phone,
-            from: 'Obisco',
+            from: process.env.TERMII_SENDER_ID, // 'ObiscoStore'
             sms: message,
             type: 'plain',
             api_key: process.env.TERMII_API_KEY,
