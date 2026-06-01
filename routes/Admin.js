@@ -65,7 +65,7 @@ router.post('/broadcast-sms', async (req, res) => {
           body: JSON.stringify({
             to: user.phone,
             from: process.env.TERMII_SENDER_ID, // 'ObiscoStore'
-            sms: message,
+            sms: message.replace('{name}', user.fullName?.split(' ')[0] || 'Valued Customer'),
             type: 'plain',
             api_key: process.env.TERMII_API_KEY,
             channel: 'generic'
