@@ -58,7 +58,13 @@ router.post('/verify', async (req, res) => {
       billersCode,
       serviceID,
       type
-    }, { headers: postHeaders() });
+    }, {
+      auth: {
+        username: process.env.VTPASS_EMAIL,
+        password: process.env.VTPASS_PASSWORD,
+      },
+      headers: { 'Content-Type': 'application/json' },
+    });
     res.json(response.data);
   } catch (error) {
     console.error('Verify error:', error.response?.data || error.message);
