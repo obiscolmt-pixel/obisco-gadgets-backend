@@ -55,7 +55,7 @@ router.get('/variations/:serviceID', async (req, res) => {
 router.post('/verify', async (req, res) => {
   try {
     const { billersCode, serviceID, type } = req.body;
-    const response = await axios.post(`${VERIFY_URL}/merchant-verify`, {
+    const response = await axios.post(`${PAY_URL}/merchant-verify`, {
       billersCode,
       serviceID,
       type
