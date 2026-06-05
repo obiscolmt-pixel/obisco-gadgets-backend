@@ -55,6 +55,11 @@ router.get('/variations/:serviceID', async (req, res) => {
 router.post('/verify', async (req, res) => {
   try {
     const { billersCode, serviceID, type } = req.body;
+
+    console.log('Verify request:', { billersCode, serviceID, type });
+    console.log('VTPASS_EMAIL:', process.env.VTPASS_EMAIL);
+    console.log('VTPASS_PASSWORD length:', process.env.VTPASS_PASSWORD?.length);
+
     const response = await axios.post(`${VERIFY_URL}/merchant-verify`, {
       billersCode,
       serviceID,
@@ -66,9 +71,13 @@ router.post('/verify', async (req, res) => {
       },
       headers: { 'Content-Type': 'application/json' },
     });
+
+    console.log('Verify response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
-    console.error('Verify error:', error.response?.data || error.message);
+    console.error('Verify error status:', error.response?.status);
+    console.error('Verify error data:', JSON.stringify(error.response?.data, null, 2));
+    console.error('Verify error message:', error.message);
     res.status(500).json({ error: error.response?.data || error.message });
   }
 });
@@ -306,5 +315,7 @@ router.post('/requery', async (req, res) => {
     res.status(500).json({ error: error.response?.data || error.message });
   }
 });
+
+
 
 export default router;
