@@ -4,6 +4,9 @@ import { deductFromWallet, refundToWallet } from './wallet.js';
 
 const router = express.Router();
 
+const PAY_URL = process.env.VTPASS_BASE_URL || 'https://vtpass.com/api';
+const VERIFY_URL = 'https://api-service.vtpass.com/api';
+
 const getHeaders = () => ({
   'api-key': process.env.VTPASS_API_KEY,
   'public-key': process.env.VTPASS_PUBLIC_KEY,
@@ -15,8 +18,6 @@ const postHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
-const baseURL = () => process.env.VTPASS_BASE_URL || 'https://sandbox.vtpass.com/api';
-
 const generateRequestId = () => {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -26,7 +27,7 @@ const generateRequestId = () => {
 // ─── GET VTPASS WALLET BALANCE ────────────────────────────────────────────────
 router.get('/balance', async (req, res) => {
   try {
-    const response = await axios.get(`${baseURL()}/balance`, {
+    const response = await axios.get(`${PAY_URL}/balance`, {
       headers: getHeaders()
     });
     res.json(response.data);
@@ -40,7 +41,7 @@ router.get('/balance', async (req, res) => {
 router.get('/variations/:serviceID', async (req, res) => {
   try {
     const { serviceID } = req.params;
-    const response = await axios.get(`${baseURL()}/service-variations?serviceID=${serviceID}`, {
+    const response = await axios.get(`${PAY_URL}/service-variations?serviceID=${serviceID}`, {
       headers: getHeaders()
     });
     res.json(response.data);
@@ -54,7 +55,7 @@ router.get('/variations/:serviceID', async (req, res) => {
 router.post('/verify', async (req, res) => {
   try {
     const { billersCode, serviceID, type } = req.body;
-    const response = await axios.post(`${baseURL()}/merchant-verify`, {
+    const response = await axios.post(`${VERIFY_URL}/merchant-verify`, {
       billersCode,
       serviceID,
       type
@@ -84,7 +85,6 @@ router.post('/airtime', async (req, res) => {
       return res.status(400).json({ error: 'Minimum airtime amount is ₦50' });
     }
 
-    // ── Deduct from wallet first ──
     const reference = `VTU_AIRTIME_${Date.now()}`;
     if (paymentMethod === 'wallet') {
       if (!userId) return res.status(401).json({ error: 'Login required to pay with wallet' });
@@ -105,12 +105,11 @@ router.post('/airtime', async (req, res) => {
 
     console.log('Airtime payload:', payload);
 
-    const response = await axios.post(`${baseURL()}/pay`, payload, { headers: postHeaders() });
+    const response = await axios.post(`${PAY_URL}/pay`, payload, { headers: postHeaders() });
     const result = response.data;
 
     console.log('Airtime response:', JSON.stringify(result, null, 2));
 
-    // ── Refund if VTpass failed ──
     if (paymentMethod === 'wallet' && result?.code !== '000') {
       await refundToWallet(userId, amount, `Refund — Airtime failed (${network} ₦${amount})`, `REFUND_${reference}`);
       console.log(`↩️ Wallet refunded ₦${amount} — airtime failed`);
@@ -118,7 +117,6 @@ router.post('/airtime', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    // ── Refund if network/server error ──
     const { userId, amount, network, phone, paymentMethod } = req.body;
     if (paymentMethod === 'wallet' && userId) {
       try {
@@ -142,7 +140,6 @@ router.post('/data', async (req, res) => {
       return res.status(400).json({ error: 'network, phone, and variationCode are required' });
     }
 
-    // ── Deduct from wallet first ──
     const reference = `VTU_DATA_${Date.now()}`;
     if (paymentMethod === 'wallet') {
       if (!userId) return res.status(401).json({ error: 'Login required to pay with wallet' });
@@ -155,7 +152,7 @@ router.post('/data', async (req, res) => {
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${baseURL()}/pay`, {
+    const response = await axios.post(`${PAY_URL}/pay`, {
       request_id: requestId,
       serviceID: network,
       billersCode: phone,
@@ -167,7 +164,6 @@ router.post('/data', async (req, res) => {
     const result = response.data;
     console.log('Data response:', JSON.stringify(result, null, 2));
 
-    // ── Refund if VTpass failed ──
     if (paymentMethod === 'wallet' && result?.code !== '000') {
       await refundToWallet(userId, amount, `Refund — Data failed (${network} ₦${amount})`, `REFUND_${reference}`);
       console.log(`↩️ Wallet refunded ₦${amount} — data failed`);
@@ -198,7 +194,6 @@ router.post('/electricity', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // ── Deduct from wallet first ──
     const reference = `VTU_ELEC_${Date.now()}`;
     if (paymentMethod === 'wallet') {
       if (!userId) return res.status(401).json({ error: 'Login required to pay with wallet' });
@@ -211,7 +206,7 @@ router.post('/electricity', async (req, res) => {
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${baseURL()}/pay`, {
+    const response = await axios.post(`${PAY_URL}/pay`, {
       request_id: requestId,
       serviceID: disco,
       billersCode: meterNumber,
@@ -223,7 +218,6 @@ router.post('/electricity', async (req, res) => {
     const result = response.data;
     console.log('Electricity response:', JSON.stringify(result, null, 2));
 
-    // ── Refund if VTpass failed ──
     if (paymentMethod === 'wallet' && result?.code !== '000') {
       await refundToWallet(userId, amount, `Refund — Electricity failed (${disco} ₦${amount})`, `REFUND_${reference}`);
       console.log(`↩️ Wallet refunded ₦${amount} — electricity failed`);
@@ -254,7 +248,6 @@ router.post('/cable', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // ── Deduct from wallet first ──
     const reference = `VTU_CABLE_${Date.now()}`;
     if (paymentMethod === 'wallet') {
       if (!userId) return res.status(401).json({ error: 'Login required to pay with wallet' });
@@ -267,7 +260,7 @@ router.post('/cable', async (req, res) => {
 
     const requestId = generateRequestId();
 
-    const response = await axios.post(`${baseURL()}/pay`, {
+    const response = await axios.post(`${PAY_URL}/pay`, {
       request_id: requestId,
       serviceID: provider,
       billersCode: smartCardNumber,
@@ -279,7 +272,6 @@ router.post('/cable', async (req, res) => {
     const result = response.data;
     console.log('Cable response:', JSON.stringify(result, null, 2));
 
-    // ── Refund if VTpass failed ──
     if (paymentMethod === 'wallet' && result?.code !== '000') {
       await refundToWallet(userId, amount, `Refund — Cable failed (${provider} ₦${amount})`, `REFUND_${reference}`);
       console.log(`↩️ Wallet refunded ₦${amount} — cable failed`);
@@ -305,7 +297,7 @@ router.post('/cable', async (req, res) => {
 router.post('/requery', async (req, res) => {
   try {
     const { requestId } = req.body;
-    const response = await axios.post(`${baseURL()}/requery`, {
+    const response = await axios.post(`${PAY_URL}/requery`, {
       request_id: requestId
     }, { headers: postHeaders() });
     res.json(response.data);
