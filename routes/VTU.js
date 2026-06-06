@@ -66,6 +66,7 @@ router.post('/verify', async (req, res) => {
         'Content-Type': 'application/json',
       },
     });
+    console.log('Verify full response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Verify error status:', error.response?.status);
