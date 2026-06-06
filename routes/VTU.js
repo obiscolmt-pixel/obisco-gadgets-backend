@@ -5,7 +5,6 @@ import { deductFromWallet, refundToWallet } from './wallet.js';
 const router = express.Router();
 
 const PAY_URL = process.env.VTPASS_BASE_URL || 'https://vtpass.com/api';
-const VERIFY_URL = 'https://api-service.vtpass.com/api';
 
 const getHeaders = () => ({
   'api-key': process.env.VTPASS_API_KEY,
@@ -23,6 +22,8 @@ const generateRequestId = () => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${Date.now()}`;
 };
+
+const verifyCache = new Map();
 
 // ─── GET VTPASS WALLET BALANCE ────────────────────────────────────────────────
 router.get('/balance', async (req, res) => {
@@ -53,13 +54,21 @@ router.get('/variations/:serviceID', async (req, res) => {
 
 // ─── VERIFY METER / SMART CARD ────────────────────────────────────────────────
 router.post('/verify', async (req, res) => {
+  const { billersCode, serviceID, type } = req.body;
+  const cacheKey = `${billersCode}_${serviceID}_${type}`;
+
+  if (verifyCache.has(cacheKey)) {
+    const cached = verifyCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < 30 * 60 * 1000) {
+      return res.json(cached.data);
+    }
+  }
+
   try {
-    const { billersCode, serviceID, type } = req.body;
     const response = await axios.post(`${PAY_URL}/merchant-verify`, {
       billersCode,
       serviceID,
       type,
-      request_id: `VERIFY_${Date.now()}`,
     }, {
       headers: {
         'api-key': process.env.VTPASS_API_KEY,
@@ -67,7 +76,8 @@ router.post('/verify', async (req, res) => {
         'Content-Type': 'application/json',
       },
     });
-    console.log('Verify full response:', JSON.stringify(response.data, null, 2));
+
+    verifyCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
     res.json(response.data);
   } catch (error) {
     console.error('Verify error status:', error.response?.status);
@@ -309,7 +319,5 @@ router.post('/requery', async (req, res) => {
     res.status(500).json({ error: error.response?.data || error.message });
   }
 });
-
-
 
 export default router;
