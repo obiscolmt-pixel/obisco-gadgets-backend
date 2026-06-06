@@ -58,7 +58,8 @@ router.post('/verify', async (req, res) => {
     const response = await axios.post(`${PAY_URL}/merchant-verify`, {
       billersCode,
       serviceID,
-      type
+      type,
+      request_id: `VERIFY_${Date.now()}`,
     }, {
       headers: {
         'api-key': process.env.VTPASS_API_KEY,
