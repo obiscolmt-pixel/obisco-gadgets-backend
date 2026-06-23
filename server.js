@@ -20,6 +20,7 @@ import paystackRoutes from './routes/Paystack.js'
 import sellerRoutes from './routes/Seller.js'
 import walletRouter from './routes/wallet.js'
 import adminRoutes from './routes/Admin.js'
+import whatsappRoutes from './routes/whatsapp.js'
 
 
 
@@ -38,6 +39,7 @@ app.use(cors({
 app.use('/api/paystack/webhook', express.raw({ type: 'application/json' }))
 
 // Middleware
+app.use('/api/whatsapp/webhook', express.json())
 app.use(express.json())
 app.use(cookieParser())
 
@@ -75,6 +77,7 @@ app.use('/api/paystack', paystackRoutes)
 app.use('/api/seller', sellerRoutes)
 app.use('/api/wallet', walletRouter)
 app.use('/api/admin', adminRoutes)
+app.use('/api/whatsapp', whatsappRoutes)
 
 
 
