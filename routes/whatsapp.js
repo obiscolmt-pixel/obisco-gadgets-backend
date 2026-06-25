@@ -1,5 +1,6 @@
 import express from 'express';
-import { processWhatsAppMessage } from '../utils/whatsappAI.js';
+import { processWhatsAppMessage, sendWhatsAppMessage } from '../utils/whatsappAI.js';
+import Conversation from '../models/Conversation.js';
 
 const router = express.Router();
 
@@ -47,10 +48,7 @@ router.post('/webhook', async (req, res) => {
       return res.status(200).send('OK');
     }
 
-    // Always respond 200 to Meta immediately
     res.status(200).send('OK');
-
-    // Process message in background
     processWhatsAppMessage(from, messageText);
 
   } catch (error) {
@@ -66,7 +64,6 @@ router.get('/conversations', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const Conversation = require('../models/Conversation');
     const conversations = await Conversation.find()
       .sort({ updatedAt: -1 })
       .limit(100);
