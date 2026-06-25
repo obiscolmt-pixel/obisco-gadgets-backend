@@ -122,6 +122,35 @@ export const processWhatsAppMessage = async (from, messageText, messageId) => {
     // Show typing indicator immediately
     if (messageId) await showTypingIndicator(from, messageId);
 
+    // ── Keyword-based escalation check (runs before AI) ──
+    const escalationKeywords = [
+      'i want to buy', 'i want to order', 'i want to make payment',
+      'i want to pay', 'place an order', 'make a payment',
+      'speak to patrick', 'speak to human', 'talk to human',
+      'talk to someone', 'speak to someone', 'human agent',
+      'i want to purchase', 'how do i pay', 'i am ready to order',
+      'i want to place', 'take my order', 'ready to buy',
+      'want to purchase', 'want to buy'
+    ];
+    const lowerMessage = messageText.toLowerCase();
+    const isKeywordEscalation = escalationKeywords.some(kw => lowerMessage.includes(kw));
+
+    if (isKeywordEscalation) {
+      conversation.isEscalated = true;
+      conversation.escalatedAt = new Date();
+      conversation.status = 'escalated';
+      await conversation.save();
+
+      await sendWhatsAppMessage(
+        from,
+        'Thank you for reaching out to Obisco Store! A member of our team will get back to you shortly to assist you. 🙏'
+      );
+
+      await triggerEscalationCall();
+      console.log(`Keyword escalation triggered for ${from}`);
+      return;
+    }
+
     // Build message history for Claude
     const messageHistory = conversation.messages.map(msg => ({
       role: msg.role,
@@ -140,22 +169,15 @@ Payment is via Paystack (cards, bank transfer) or wallet balance.
 Delivery is available to any state in Nigeria.
 Website: obisco.store
 
-ESCALATION RULE — THIS IS VERY IMPORTANT:
-You must NEVER respond with "ESCALATE" unless the customer uses one of these EXACT triggers:
-- Customer says "I want to buy" or "I want to order" or "I want to make payment"
-- Customer says "I want to talk to a human" or "speak to Patrick" or "speak to someone"
-- Customer says they have an urgent complaint or serious issue
-
-For EVERYTHING else — greetings, product questions, price questions, delivery questions, VTU questions, general inquiries — YOU MUST ANSWER YOURSELF. Do not escalate.
-
-If you are unsure what the customer wants, ask a follow up question. Do not escalate.
-
-RESPONSE RULES:
+YOUR RULES:
+- Answer ALL questions yourself — greetings, product questions, delivery, VTU, pricing
 - Be friendly, professional and concise
 - Write in plain conversational English
 - Keep replies under 3 sentences
-- Do not make up prices — say "please contact us on WhatsApp for pricing"
-- If asked about order status, direct to obisco.store`,
+- Do not make up prices — say "please contact us on WhatsApp for current pricing"
+- If asked about order status, direct to obisco.store
+- NEVER use the word ESCALATE in your reply under any circumstances
+- If you cannot help, say "Please contact us directly on WhatsApp for further assistance"`,
       messages: messageHistory
     });
 
@@ -165,27 +187,7 @@ RESPONSE RULES:
     const delay = Math.min(1000 + aiReply.length * 20, 5000);
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    // Check if AI decided to escalate
-    if (aiReply === 'ESCALATE') {
-      conversation.isEscalated = true;
-      conversation.escalatedAt = new Date();
-      conversation.status = 'escalated';
-      await conversation.save();
-
-      // Send holding message to customer
-      await sendWhatsAppMessage(
-        from,
-        'Thank you for reaching out to Obisco Store! A member of our team will get back to you shortly. 🙏'
-      );
-
-      // Ring Patrick's phone
-      await triggerEscalationCall();
-
-      console.log(`Conversation escalated for ${from}`);
-      return;
-    }
-
-    // Normal reply — send it and save to history
+    // Save and send normal reply
     conversation.messages.push({ role: 'assistant', content: aiReply });
     conversation.status = 'active';
     await conversation.save();
