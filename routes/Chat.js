@@ -96,8 +96,8 @@ SPECIALIST ROUTING RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 🚚 DELIVERY INFO
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-- Nationwide delivery across Nigeria
-- 2-5 business days
+- We deliver to any state in Nigeria
+- Delivery takes 2-5 business days
 - Fast delivery available in Lagos
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
