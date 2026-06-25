@@ -183,9 +183,6 @@ YOUR RULES:
 
     const aiReply = response.content[0].text.trim();
 
-    // Natural delay based on reply length (min 1s, max 5s)
-    const delay = Math.min(1000 + aiReply.length * 20, 5000);
-    await new Promise(resolve => setTimeout(resolve, delay));
 
     // Save and send normal reply
     conversation.messages.push({ role: 'assistant', content: aiReply });
