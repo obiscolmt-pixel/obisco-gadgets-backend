@@ -35,7 +35,7 @@ export const sendWhatsAppMessage = async (to, message) => {
 // Show typing indicator to customer
 export const showTypingIndicator = async (to, messageId) => {
   try {
-    // Mark message as read first
+    // Mark message as read
     await fetch(
       `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
@@ -52,7 +52,7 @@ export const showTypingIndicator = async (to, messageId) => {
       }
     );
 
-    // Send typing indicator
+    // Show typing indicator
     await fetch(
       `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
@@ -65,10 +65,9 @@ export const showTypingIndicator = async (to, messageId) => {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
           to,
-          type: 'reaction',
-          reaction: {
-            message_id: messageId,
-            emoji: ''
+          type: 'typing_indicator',
+          typing_indicator: {
+            type: 'text'
           }
         })
       }
@@ -146,8 +145,12 @@ Your job:
 - Be friendly, professional, and concise
 - Write in plain conversational English (not overly formal)
 - If a customer asks about a specific order status, tell them to check obisco.store/orders or provide their order number
-- If a customer is angry, wants a refund, is negotiating price heavily, explicitly asks to speak to a human, or asks something you genuinely cannot answer — respond with exactly this text and nothing else: ESCALATE
-
+- ONLY respond with exactly "ESCALATE" (nothing else) when:
+  1. A customer explicitly says they want to make a payment or place an order
+  2. A customer explicitly asks to speak to a human or Patrick
+  3. A customer has a complaint that requires urgent human attention
+- For ALL other questions including product inquiries, general questions, delivery info, VTU services — answer them yourself without escalating
+- Do NOT escalate just because you are unsure — try your best to answer first
 Do not make up prices or product availability. Keep replies under 3 sentences where possible.`,
       messages: messageHistory
     });
