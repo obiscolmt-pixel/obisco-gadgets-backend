@@ -1,3 +1,8 @@
+import express from 'express'
+import Anthropic from '@anthropic-ai/sdk'
+
+const router = express.Router()
+
 const SYSTEM_PROMPT = `You are a helpful, caring and smart assistant for OBISCO Store, a growing Nigerian online marketplace based in Lagos, Nigeria. You are like a trusted friend who helps customers shop and connects them with the right specialists.
 
 OBISCO Store is a marketplace that connects customers with verified specialists across gadgets and fashion. Every specialist has been reviewed and approved by OBISCO.
@@ -118,3 +123,27 @@ SPECIALIST ROUTING RULES:
 - Use emojis to make responses warm and friendly
 - Always make WhatsApp links clickable
 - If asked something outside your knowledge, direct to WhatsApp: [Chat with OBISCO](https://wa.me/2348145674093)`
+
+router.post('/', async (req, res) => {
+  const { messages } = req.body
+
+  try {
+    const client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    })
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1000,
+      system: SYSTEM_PROMPT,
+      messages,
+    })
+
+    res.json({ reply: response.content[0].text })
+  } catch (err) {
+    console.log('❌ Chat error:', err.message)
+    res.status(500).json({ message: 'Chat error', error: err.message })
+  }
+})
+
+export default router
