@@ -59,4 +59,36 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
+// GET all conversations (admin)
+router.get('/conversations', async (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const Conversation = require('../models/Conversation');
+    const conversations = await Conversation.find()
+      .sort({ updatedAt: -1 })
+      .limit(100);
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load conversations' });
+  }
+});
+
+// POST manual reply (admin)
+router.post('/reply', async (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { phone, message } = req.body;
+  try {
+    await sendWhatsAppMessage(phone, message);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
