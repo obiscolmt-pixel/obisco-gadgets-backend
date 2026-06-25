@@ -35,15 +35,15 @@ export const sendWhatsAppMessage = async (to, message) => {
 // Trigger a Termii voice call to escalate to you
 export const triggerEscalationCall = async () => {
   try {
-    const response = await fetch('https://v3.api.termii.com/api/sms/voice/call', {
+    const response = await fetch('https://v3.api.termii.com/api/sms/otp/send/voice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         api_key: process.env.TERMII_API_KEY,
-        phone: process.env.OWNER_PHONE,
-        voice_type: 'female',
-        channel: 'voice',
-        text: 'Hello Patrick, a customer on Obisco Store needs your attention on WhatsApp. Please check your messages now.'
+        phone_number: process.env.OWNER_PHONE,
+        pin_attempts: 1,
+        pin_time_to_live: 5,
+        pin_length: 4,
       })
     });
     const data = await response.json();
