@@ -49,7 +49,8 @@ router.post('/webhook', async (req, res) => {
     }
 
     res.status(200).send('OK');
-    processWhatsAppMessage(from, messageText);
+    const messageId = message.id;
+    processWhatsAppMessage(from, messageText, messageId);
 
   } catch (error) {
     console.error('WhatsApp webhook error:', error);

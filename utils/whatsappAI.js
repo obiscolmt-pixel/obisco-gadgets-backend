@@ -32,6 +32,54 @@ export const sendWhatsAppMessage = async (to, message) => {
   }
 };
 
+// Show typing indicator to customer
+export const showTypingIndicator = async (to, messageId) => {
+  try {
+    // Mark message as read first
+    await fetch(
+      `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          status: 'read',
+          message_id: messageId
+        })
+      }
+    );
+
+    // Send typing indicator
+    await fetch(
+      `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to,
+          type: 'reaction',
+          reaction: {
+            message_id: messageId,
+            emoji: ''
+          }
+        })
+      }
+    );
+
+    console.log('Typing indicator sent to', to);
+  } catch (error) {
+    console.error('Typing indicator error:', error);
+  }
+};
+
 // Trigger a Termii voice call to escalate to you
 export const triggerEscalationCall = async () => {
   try {
@@ -55,7 +103,7 @@ export const triggerEscalationCall = async () => {
 };
 
 // Main AI engine — reads message, decides, replies or escalates
-export const processWhatsAppMessage = async (from, messageText) => {
+export const processWhatsAppMessage = async (from, messageText, messageId) => {
   try {
     // Get or create conversation history for this customer
     let conversation = await Conversation.findOne({ phoneNumber: from });
@@ -72,6 +120,9 @@ export const processWhatsAppMessage = async (from, messageText) => {
       conversation.messages = conversation.messages.slice(-10);
     }
 
+    // Show typing indicator immediately
+    if (messageId) await showTypingIndicator(from, messageId);
+
     // Build message history for Claude
     const messageHistory = conversation.messages.map(msg => ({
       role: msg.role,
@@ -87,7 +138,7 @@ export const processWhatsAppMessage = async (from, messageText) => {
 Obisco Store sells: gadgets, electronics, phones, and accessories. It also offers VTU services: airtime top-up, data bundles, electricity bills, and cable TV subscriptions (DSTV, GOtv, Startimes).
 
 Payment is via Paystack (cards, bank transfer) or wallet balance.
-Delivery is available across Nigeria.
+Delivery is available to any state in Nigeria.
 Website: obisco.store
 
 Your job:
@@ -102,6 +153,10 @@ Do not make up prices or product availability. Keep replies under 3 sentences wh
     });
 
     const aiReply = response.content[0].text.trim();
+
+    // Natural delay based on reply length (min 1s, max 5s)
+    const delay = Math.min(1000 + aiReply.length * 20, 5000);
+    await new Promise(resolve => setTimeout(resolve, delay));
 
     // Check if AI decided to escalate
     if (aiReply === 'ESCALATE') {
