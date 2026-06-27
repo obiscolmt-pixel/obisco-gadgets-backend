@@ -68,7 +68,7 @@ router.post('/', async (req, res) => {
       discount,
       paystackRef: req.body.paystackRef || '', // ✅ add this
       paymentMethod: paymentMethod || 'paystack', // ✅ add this
-      paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'pending'
+      paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'unpaid'
     })
 
     // ... rest of your email code stays exactly the same
