@@ -6,6 +6,10 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     required: false,
   },
+  paystackRef: {
+    type: String,
+    default: '',
+  },
   items: [
     {
       productId: String,
@@ -39,6 +43,9 @@ const orderSchema = new mongoose.Schema({
     enum: ['unpaid', 'paid'],
     default: 'unpaid',
   },
+  promoCode: String,
+  discount: Number,
+  paymentMethod: String,
 }, { timestamps: true })
 
 export default mongoose.model('Order', orderSchema)

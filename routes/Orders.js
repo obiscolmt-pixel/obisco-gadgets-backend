@@ -38,7 +38,7 @@ const statusMessages = {
 
 // @route POST /api/orders — place an order
 
-  router.post('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const { items, totalAmount, delivery, userId, promoCode, discount, paymentMethod } = req.body
 
   try {
@@ -66,6 +66,8 @@ const statusMessages = {
       delivery,
       promoCode,
       discount,
+      paystackRef: req.body.paystackRef || '', // ✅ add this
+      paymentMethod: paymentMethod || 'paystack', // ✅ add this
       paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'pending'
     })
 

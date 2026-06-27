@@ -48,7 +48,10 @@ router.get('/verify/:reference', async (req, res) => {
     const data = await response.json()
 
     if (data.data?.status === 'success') {
-      await Order.findByIdAndUpdate(reference, { paymentStatus: 'paid' })
+      await Order.findOneAndUpdate(
+        { paystackRef: reference },
+        { paymentStatus: 'paid' }
+      )
     }
 
     res.json(data)
@@ -79,7 +82,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       // ── Wallet funding ──
       if (metadata?.type === 'wallet_funding') {
         const userId = metadata.userId
-        const amount = event.data.amount / 100 // convert from kobo to naira
+        const amount = event.data.amount / 100
 
         let wallet = await Wallet.findOne({ user: userId })
         if (!wallet) {
@@ -101,7 +104,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         console.log(`✅ Wallet credited ₦${amount} for user ${userId}`)
       } else {
         // ── Regular order payment ──
-        await Order.findByIdAndUpdate(reference, { paymentStatus: 'paid' })
+        await Order.findOneAndUpdate(
+          { paystackRef: reference },
+          { paymentStatus: 'paid' }
+        )
         console.log('✅ Order payment confirmed via webhook:', reference)
       }
     }
